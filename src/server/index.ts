@@ -80,6 +80,10 @@ const routes = {
       network: ALGORAND_TESTNET_CAIP2,
       payTo: PAY_TO,
       price: "$1.00",
+      // Required tag for Bazaar/leaderboard attribution under the x402 Global
+      // Challenge — observed on other real listed endpoints via the public
+      // facilitator's own /discovery/resources catalog.
+      extra: { tag: "x402-global-challenge" },
     },
     description:
       "Runs Ward's adversarial x402 facilitator invariant suite (U1–U5, A1–A3) against a facilitator URL you provide and returns a pass/fail report with reproducible evidence.",
