@@ -51,7 +51,24 @@ client.onBeforePaymentCreation(async (ctx) => {
 });
 client.onAfterPaymentCreation(async () => console.log("onAfterPaymentCreation: signed OK"));
 client.onPaymentCreationFailure(async ({ error }) => console.log("onPaymentCreationFailure:", error));
-const fetchWithPay = wrapFetchWithPayment(fetch, client);
+
+// Node's fetch sends no User-Agent by default, and wrapFetchWithPayment's internal
+// paid retry doesn't carry forward a caller-supplied one either (confirmed directly:
+// passing it via this call's own `headers` only reached the first, unpaid request).
+// Some hosts' edge (Cloudflare fronting Render's free tier) quietly blocks that
+// combination on POST while letting GETs through. Injecting the header at the fetch
+// layer itself, underneath the x402 wrapper, guarantees every request carries it.
+const fetchWithUA: typeof fetch = (input, init) =>
+  fetch(input, {
+    ...init,
+    headers: {
+      ...init?.headers,
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+    },
+  });
+
+const fetchWithPay = wrapFetchWithPayment(fetchWithUA, client);
 
 async function main() {
   console.log(`Paying for a verification check against ${facilitatorUrl} as ${address}...`);

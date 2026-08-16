@@ -20,6 +20,7 @@ import express from "express";
 import { paymentMiddleware, x402ResourceServer } from "@x402/express";
 import { ExactAvmScheme } from "@x402/avm/exact/server";
 import { HTTPFacilitatorClient } from "@x402/core/server";
+import { bazaarResourceServerExtension, declareDiscoveryExtension } from "@x402/extensions";
 import { ALGORAND_TESTNET_CAIP2 } from "../chain-adapters/algorand/network-ids.js";
 import { buildScenario } from "../cli/setup.js";
 import { runInvariants } from "../core/runner.js";
@@ -54,6 +55,23 @@ app.use(express.json());
 const facilitatorClient = new HTTPFacilitatorClient({ url: PAYMENT_FACILITATOR_URL });
 const resourceServer = new x402ResourceServer(facilitatorClient);
 resourceServer.register("algorand:*", new ExactAvmScheme());
+// Lets the payment facilitator catalog this endpoint into Bazaar (x402's
+// discovery directory) once a real payment settles through it — required for
+// the "endpoint appears in the Bazaar catalog" submission bar.
+resourceServer.registerExtension(bazaarResourceServerExtension);
+
+// Already shaped as { bazaar: { info, schema } } — do not re-wrap under a "bazaar" key.
+const verifyDiscovery = declareDiscoveryExtension({
+  bodyType: "json",
+  input: { facilitatorUrl: "https://facilitator.goplausible.xyz" },
+  inputSchema: {
+    properties: { facilitatorUrl: { type: "string", description: "URL of the x402 facilitator to test" } },
+    required: ["facilitatorUrl"],
+  },
+  output: {
+    example: { ok: true, report: { summary: { total: 8, passed: 8, failed: 0 } } },
+  },
+});
 
 const routes = {
   "POST /verify-facilitator": {
@@ -65,6 +83,7 @@ const routes = {
     },
     description:
       "Runs Ward's adversarial x402 facilitator invariant suite (U1–U5, A1–A3) against a facilitator URL you provide and returns a pass/fail report with reproducible evidence.",
+    extensions: verifyDiscovery,
   },
 };
 
