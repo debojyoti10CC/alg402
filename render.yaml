@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: ward-verify
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: node dist/server/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 20.18.0
+      - key: WARD_NETWORK
+        value: testnet
+      - key: ALGOD_TESTNET_URL
+        value: https://testnet-api.algonode.cloud
+      - key: USDC_ASSET_ID
+        value: "10458941"
+      - key: PAYMENT_FACILITATOR_URL
+        value: https://facilitator.goplausible.xyz
+      # Set in the Render dashboard, never committed here — see .env.example
+      # for what each one is.
+      - key: SERVER_PAY_TO_ADDRESS
+        sync: false
+      - key: WARD_CLIENT_PRIVATE_KEY
+        sync: false
+      - key: WARD_PAYTO_ADDRESS
+        sync: false
+      - key: WARD_PAYTO_PRIVATE_KEY
+        sync: false
+      - key: WARD_FUNDER_PRIVATE_KEY
+        sync: false

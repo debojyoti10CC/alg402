@@ -1,0 +1,23 @@
+services:
+  facilitator:
+    build:
+      context: .
+      dockerfile: docker/facilitator.Dockerfile
+    ports:
+      - "4022:4022"
+    environment:
+      PORT: "4022"
+      AVM_PRIVATE_KEY: "${AVM_PRIVATE_KEY:?set AVM_PRIVATE_KEY in .env — see .env.example}"
+      ALGOD_SERVER: "${ALGOD_TESTNET_URL:-https://testnet-api.algonode.cloud}"
+      ALGOD_TOKEN: "${ALGOD_TOKEN:-}"
+      # The upstream example is a multi-chain facilitator and refuses to start without
+      # these two, even though Ward only exercises the AVM/Algorand scheme — see
+      # DECISIONS.md D1. Any well-formed throwaway value works; they are never funded
+      # or used to sign anything real.
+      EVM_PRIVATE_KEY: "${EVM_PRIVATE_KEY:?set a well-formed throwaway EVM key in .env — see .env.example}"
+      SVM_PRIVATE_KEY: "${SVM_PRIVATE_KEY:?set a well-formed throwaway SVM key in .env — see .env.example}"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4022/supported').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
